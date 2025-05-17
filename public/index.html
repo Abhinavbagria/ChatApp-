@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat App</title>
+  <style>
+    :root {
+      --bg-color: #000;
+      --chat-bg: #121212;
+      --msg-bg: #1e1e1e;
+      --sys-msg-color: #a0a0a0;
+      --input-bg: #2a2a2a;
+      --input-color: #fff;
+      --text-color: #e0e0e0;
+    }
+
+    body.light {
+      --bg-color: #f0f0f0;
+      --chat-bg: #fff;
+      --msg-bg: #e0e0e0;
+      --sys-msg-color: #555;
+      --input-bg: #fff;
+      --input-color: #000;
+      --text-color: #000;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: background 0.3s;
+    }
+
+    #chat-container {
+      width: 100%;
+      max-width: 500px;
+      background: var(--chat-bg);
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: var(--text-color);
+    }
+
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background: var(--msg-bg);
+      border-bottom: 1px solid #333;
+    }
+
+    #messages {
+      list-style: none;
+      margin: 0;
+      padding: 1rem;
+      height: 400px;
+      overflow-y: auto;
+    }
+
+    #messages li {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: var(--msg-bg);
+      border-radius: 8px;
+      max-width: 80%;
+    }
+
+    #messages li.system {
+      background: transparent;
+  color: var(--sys-msg-color);
+  font-style: italic;
+  text-align: center;
+    }
+
+    form {
+      display: flex;
+      border-top: 1px solid #333;
+      padding: 10px;
+      background: var(--msg-bg);
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #555;
+      font-size: 1rem;
+      background: var(--input-bg);
+      color: var(--input-color);
+      outline: none;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .toggle input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="chat-container">
+    <div id="header">
+      <strong>Chat App</strong>
+      <div class="toggle">
+        <label for="modeSwitch">🌞</label>
+        <input type="checkbox" id="modeSwitch" />
+        <label for="modeSwitch">🌙</label>
+      </div>
+    </div>
+
+    <ul id="messages"></ul>
+
+    <form id="form">
+      <input id="input" autocomplete="off" placeholder="Type your message..." />
+      <button id="btn">Send</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+    const modeSwitch = document.getElementById('modeSwitch');
+
+    const name = prompt("Enter Your Name");
+    socket.emit("joined", name);
+    // socket.emit("disconnect",name);
+
+    // Handle joined messages
+    socket.on("joined", (msg) => {
+      const item = document.createElement('li');
+      item.textContent = msg;
+      item.classList.add("system");
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    // Handle chat messages
+    socket.on("massege", (message) => {
+      const item = document.createElement('li');
+      item.textContent = message;
+      messages.appendChild(item);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if (msg) {
+        socket.emit('usermsg', `${name}: ${msg}`);
+        input.value = '';
+      }
+    });
+
+    // Theme toggle logic
+    modeSwitch.addEventListener('change', () => {
+      document.body.classList.toggle('light', modeSwitch.checked);
+    });
+  </script>
+</body>
+</html>
